@@ -151,5 +151,4 @@ $result = $stmt->get_result();
         });
     </script>
 </body>
-
 </html>
