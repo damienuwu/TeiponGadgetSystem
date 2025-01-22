@@ -54,41 +54,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   // Insert the new staff record into the database with the appropriate adminID
   $sql = "INSERT INTO Staff (staffName, staffUsername, staffEmail, staffPassword, adminID) VALUES (?, ?, ?, ?, ?)";
   $stmt = $conn->prepare($sql);
-  
+
   // Bind parameters and ensure we pass by reference
   $stmt->bind_param("ssssi", $staffName, $staffUsername, $staffEmail, $hashedPassword, $adminIDToInsert);
-
   if ($stmt->execute()) {
-    // Display success message with redirect using inline HTML and JS
-    echo '
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Success</title>
-          <link href="../assets/css/bootstrap.min.css" rel="stylesheet">
-          <script>
-            // Redirect to admin dashboard after 3 seconds
-            setTimeout(function () {
-              window.location.href = "../admin_dashboard/admin_dashboard.php";
-            }, 3000);
-          </script>
-        </head>
-        <body class="bg-light d-flex justify-content-center align-items-center min-vh-100">
-          <div class="alert alert-success text-center shadow p-4" style="width: 100%; max-width: 400px;">
-            <h4 class="alert-heading">Success!</h4>
-            <p>Staff member has been registered successfully.</p>
-            <hr>
-            <p class="mb-0">Redirecting to the admin dashboard...</p>
-          </div>
-        </body>
-        </html>';
+    // Redirect to register_staff.php with a success message
+    header("Location: register_staff.php?success=1");
     exit();
   } else {
-    // Redirect back with error message
-    $error = "Error: " . $stmt->error;
-    header("Location: register_staff.php?error=" . urlencode($error));
+    // Redirect to register_staff.php with an error message if query fails
+    header("Location: register_staff.php?error=Failed to register staff");
     exit();
   }
 }
