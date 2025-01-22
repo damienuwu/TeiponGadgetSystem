@@ -79,27 +79,34 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 </div>
                 <div class="mb-3">
                     <label for="email" class="form-label">Email</label>
-                    <input type="email" class="form-control" id="email" name="email" value="<?php echo htmlspecialchars($customer['customerEmail']); ?>" required>
+                    <input type="email" class="form-control" id="email" name="email" placeholder="Email" value="<?php echo htmlspecialchars($customer['customerEmail']); ?>" required>
+                    <div class="error-message" id="emailError"></div>
                 </div>
                 <div class="mb-3">
                     <label for="phoneNumber" class="form-label">Phone Number</label>
-                    <input type="text" class="form-control" id="phoneNumber" name="phoneNumber" value="<?php echo htmlspecialchars($customer['customerPhoneNumber']); ?>" required>
-                </div>
-                <div class="mb-3">
-                    <label for="state" class="form-label">State</label>
-                    <input type="text" class="form-control" id="state" name="state" value="<?php echo htmlspecialchars($customer['customerState']); ?>">
-                </div>
-                <div class="mb-3">
-                    <label for="postalCode" class="form-label">Postal Code</label>
-                    <input type="number" class="form-control" id="postalCode" name="postalCode" value="<?php echo htmlspecialchars($customer['customerPostalCode']); ?>">
-                </div>
-                <div class="mb-3">
-                    <label for="city" class="form-label">City</label>
-                    <input type="text" class="form-control" id="city" name="city" value="<?php echo htmlspecialchars($customer['customerCity']); ?>">
+                    <input type="text" class="form-control" id="phoneNumber" name="phoneNumber" placeholder="Phone" value="<?php echo htmlspecialchars(substr($customer['customerPhoneNumber'], 0)); ?>" required oninput="validatePhoneNumber(event)">
                 </div>
                 <div class="mb-3">
                     <label for="address" class="form-label">Address</label>
-                    <input type="text" class="form-control" id="address" name="address" value="<?php echo htmlspecialchars($customer['customerAddress']); ?>">
+                    <input type="text" class="form-control" id="address" name="address" placeholder="Address" value="<?php echo htmlspecialchars($customer['customerAddress']); ?>" required>
+                </div>
+                <div class="mb-3">
+                    <label for="state" class="form-label">State</label>
+                    <select class="form-select" id="state" name="state" required data-saved-state="<?php echo htmlspecialchars($customer['customerState']); ?>">
+                        <option value="">Select State</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="city" class="form-label">City</label>
+                    <select class="form-select" id="city" name="city" required data-saved-city="<?php echo htmlspecialchars($customer['customerCity']); ?>">
+                        <option value="">Select City</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="postalCode" class="form-label">Postal Code</label>
+                    <select class="form-select" id="postalCode" name="postalCode" required data-saved-postal="<?php echo htmlspecialchars($customer['customerPostalCode']); ?>">
+                        <option value="">Select Postal Code</option>
+                    </select>
                 </div>
                 <button type="submit" class="btn btn-primary">Update</button>
             </form>
@@ -107,6 +114,82 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </div>
 
     <script src="../assets/js/bootstrap.bundle.min.js"></script>
+    <script src="state-city-postal.js"></script>
+    <script>
+        function validatePhoneNumber(event) {
+            const input = event.target;
+            const prefix = "+60";
+            let phoneNumber = input.value;
+
+            // Ensure the phone number starts with the prefix
+            if (!phoneNumber.startsWith(prefix)) {
+                phoneNumber = prefix + phoneNumber.substring(3);  // Keep prefix non-editable
+            }
+
+            // Set the value so the user can only edit the number after the prefix
+            input.value = phoneNumber;
+
+            // Limit the phone number length (10 digits total, including +60)
+            if (input.value.length > 12) {
+                input.value = input.value.substring(0, 12);
+            }
+        }
+    </script>
+    <script>
+        document.getElementById('email').addEventListener('input', function () {
+            const emailInput = this.value.trim();
+            const errorDiv = document.getElementById('emailError');
+            const emailField = document.getElementById('email');
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;  // Basic email format
+
+            // Clear previous error message if input is empty
+            if (emailInput.length === 0) {
+                errorDiv.textContent = "";
+                emailField.classList.remove('is-invalid');
+            }
+            // Check email format
+            else if (!emailRegex.test(emailInput)) {
+                errorDiv.textContent = "Please enter a valid email address.";
+                errorDiv.style.color = "red";
+                emailField.classList.add('is-invalid');
+            }
+            // If the email format is valid, proceed to check if it's already taken
+            else {
+                const xhr = new XMLHttpRequest();
+                xhr.open("POST", "../register/check_register.php", true);  // Reusing check_register.php
+                xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === 4 && xhr.status === 200) {
+                        const response = xhr.responseText.trim();
+                        console.log("Server response:", response);  // Add this line for debugging
+
+                        // Handle server response: 'taken' or 'available'
+                        if (response === "taken") {
+                            errorDiv.textContent = "Email is already registered.";
+                            errorDiv.style.color = "red";
+                            emailField.classList.add('is-invalid');
+                        } else if (response === "available") {
+                            errorDiv.textContent = "Email is available.";
+                            errorDiv.style.color = "green";
+                            emailField.classList.remove('is-invalid');
+                        } else if (response === "invalid_email") {
+                            errorDiv.textContent = "Please enter a valid email address.";
+                            errorDiv.style.color = "red";
+                            emailField.classList.add('is-invalid');
+                        } else {
+                            errorDiv.textContent = "An error occurred. Please try again later.";
+                            errorDiv.style.color = "red";
+                            emailField.classList.add('is-invalid');
+                        }
+                    }
+                };
+
+                // Send the email to the server for validation
+                xhr.send("email=" + encodeURIComponent(emailInput));
+            }
+        });
+    </script>
 </body>
 </html>
 

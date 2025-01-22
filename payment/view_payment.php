@@ -256,7 +256,7 @@ $orderData = getAllOrderData($conn, $customerID);
                                                                     onclick="cancelOrder(<?= $row['orderID']; ?>)">Cancel Order</button>
                                                             <?php elseif ($status === 'Order Shipped'): ?>
                                                                 <button class="btn btn-success btn-sm"
-                                                                    data-order-id="<?= $row['orderID']; ?>">Mark as Completed</button>
+                                                                    onclick="markOrderAsCompleted(<?= $row['orderID']; ?>)">Mark as Completed</button>
                                                             <?php endif; ?>
                                                         </div>
                                                     </td>
@@ -337,6 +337,25 @@ $orderData = getAllOrderData($conn, $customerID);
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="completeOrderModal" tabindex="-1" aria-labelledby="completeOrderModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="completeOrderModalLabel">Confirm Completion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to mark this order as completed?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" id="confirmCompleteBtn" class="btn btn-success">Mark as Completed</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 
     <script src="../assets/js/bootstrap.bundle.min.js"></script>
@@ -547,44 +566,37 @@ $orderData = getAllOrderData($conn, $customerID);
 
                 // Send AJAX request to mark the order as 'Order Completed'
                 $.ajax({
-                    url: '', // The current page, so it handles the request
+                    url: 'mark_order_completed.php', // Update to point to your completion logic handler
                     method: 'POST',
                     data: {
                         completeOrder: true, // This will trigger the status update
                         orderID: orderID
                     },
                     success: function(response) {
-                        const result = JSON.parse(response);
-                        if (result.success) {
-                            // Show success message
-                            showAlert('Order has been marked as completed.', 'success');
-                            location.reload(); // Refresh the page to update the order status
-                        } else {
-                            // Show error message
-                            showAlert('Failed to mark the order as completed. Please try again.', 'danger');
+                        try {
+                            const result = JSON.parse(response);
+                            if (result.success) {
+                                // Show success message
+                                showAlert('Order has been marked as completed.', 'success');
+                                location.reload(); // Refresh the page to update the order status
+                            } else {
+                                // Show error message
+                                showAlert(result.message || 'Failed to mark the order as completed. Please try again.', 'danger');
+                            }
+                        } catch (e) {
+                            console.error('Error parsing response:', e);
+                            // Show error message for invalid JSON response
+                            showAlert('An error occurred while marking the order as completed.', 'danger');
                         }
                     },
                     error: function(xhr, status, error) {
                         console.error("Error:", status, error);
                         // Show error message
-                        showAlert('An error occurred while updating the order status.', 'danger');
+                        showAlert('An error occurred while marking the order as completed.', 'danger');
                     }
                 });
             });
         }
-
-        // Attach the event to the button for Marking as Completed
-        $('.btn-success').click(function() {
-            var orderID = $(this).data('order-id'); // Get the order ID
-            markOrderAsCompleted(orderID); // Call the function to mark as completed
-        });
-
-
-        // Add the event listener to the button in the HTML (in the loop where you're rendering orders)
-        $('.btn-success').click(function() {
-            var orderID = $(this).data('order-id'); // Get the order ID
-            markOrderAsCompleted(orderID); // Call the function to mark as completed
-        });
 
         // Initialize the cart modal when the page loads
         $(document).ready(function() {
