@@ -7,6 +7,8 @@
   <title>Register Staff</title>
   <link href="../assets/css/bootstrap.min.css" rel="stylesheet">
   <link href="../global.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 </head>
 
 <body>
@@ -17,18 +19,8 @@
         <div class="card shadow-sm p-4 mt-4">
           <h2 class="text-center mb-4">Register New Staff</h2>
 
-          <?php if (isset($_GET['success']) && $_GET['success'] == 1): ?>
-            <div class="alert alert-success" role="alert">
-              Staff member registered successfully!
-            </div>
-          <?php elseif (isset($_GET['error'])): ?>
-            <div class="alert alert-danger" role="alert">
-              <?php echo htmlspecialchars($_GET['error']); ?>
-            </div>
-          <?php endif; ?>
-
           <!-- Registration Form -->
-          <form action="process_register_staff.php" method="POST">
+          <form id="registerForm" action="process_register_staff.php" method="POST" onsubmit="return validateForm(event);">
 
             <div class="mb-3 d-flex justify-content-center">
               <div class="form-check form-check-inline">
@@ -72,7 +64,7 @@
             </div>
 
             <div class="d-grid">
-              <button type="submit" class="btn btn-success" onclick="validateForm()">Register Staff</button>
+              <button type="submit" class="btn btn-success">Register Staff</button>
             </div>
           </form>
         </div>
@@ -82,49 +74,80 @@
 
   <script src="../assets/js/bootstrap.bundle.min.js"></script>
   <script>
-    function validateForm() {
+    function validateForm(event) {
+      const staffName = document.getElementById('staffName').value.trim();
+      const staffUsername = document.getElementById('staffUsername').value.trim();
+      const staffEmail = document.getElementById('staffEmail').value.trim();
+      const staffPassword = document.getElementById('staffPassword').value.trim();
+      const confirmPassword = document.getElementById('confirm_password').value.trim();
 
-      const staffName = document.getElementById('staffName');
-      const staffUsername = document.getElementById('staffUsername');
-      const staffEmail = document.getElementById('staffEmail');
-      const staffPassword = document.getElementById('staffPassword');
-      const confirmPassword = document.getElementById('confirm_password');
-
-      document.querySelectorAll('.error-message').forEach(e => e.textContent = '');
-
-      let isValid = true;
-
-      if (!staffName.value.trim()) {
-        document.getElementById('nameError').textContent = 'Staff name is required';
-        isValid = false;
+      // Validation
+      if (!staffName) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Validation Error',
+          text: 'Staff name is required.',
+        });
+        event.preventDefault(); // Prevent form submission
+        return false;
       }
 
-      if (!staffUsername.value.trim()) {
-        document.getElementById('usernameError').textContent = 'Staff username is required';
-        isValid = false;
+      if (!staffUsername) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Validation Error',
+          text: 'Staff username is required.',
+        });
+        event.preventDefault(); // Prevent form submission
+        return false;
       }
 
-      if (!staffEmail.value.trim()) {
-        document.getElementById('emailError').textContent = 'Staff email is required';
-        isValid = false;
+      if (!staffEmail) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Validation Error',
+          text: 'Staff email is required.',
+        });
+        event.preventDefault(); // Prevent form submission
+        return false;
       }
 
-      if (!staffPassword.value.trim()) {
-        document.getElementById('passwordError').textContent = 'Staff password is required';
-        isValid = false;
+      if (!staffPassword) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Validation Error',
+          text: 'Staff password is required.',
+        });
+        event.preventDefault(); // Prevent form submission
+        return false;
       }
 
-      if (staffPassword.value !== confirmPassword.value) {
-        document.getElementById('confirmPasswordError').textContent = 'Passwords do not match.';
-        isValid = false;
+      if (staffPassword !== confirmPassword) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Validation Error',
+          text: 'Passwords do not match.',
+        });
+        event.preventDefault(); // Prevent form submission
+        return false;
       }
 
-      // If all fields are valid, submit the form
-      if (isValid) {
+      // If everything is valid, show a success message
+      Swal.fire({
+        icon: 'success',
+        title: 'Form Validated',
+        text: 'Staff registration is successful!',
+      }).then(() => {
+        // Submit the form after success message
         document.getElementById('registerForm').submit();
-      }
+      });
+
+      return false; // Prevent form submission to allow SweetAlert to handle it
     }
   </script>
+
+
+
 </body>
 
 </html>
