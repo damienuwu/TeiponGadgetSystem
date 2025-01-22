@@ -1,3 +1,7 @@
+body {  
+    font-family: 'Roboto',Arial, Helvetica, sans-serif, sans-serif; 
+} 
+
 .product-image {
     width: 150px;
     height: 150px !important;
@@ -140,44 +144,65 @@
     width: 100%;
 }
 
-#open-chatbox {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 60px;
-    height: 60px;
-    border: none;
-    border-radius: 50%; 
-    background-image: url('../chatbox/img/teiponBot-icon.png'); 
-    background-size: cover; 
-    background-color: #4DA1A9; 
-    color: #4DA1A9; 
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.6);
-    transition: all 0.3s ease;
-  }
+#open-chatbox {  
+    position: fixed;  
+    bottom: 20px;  
+    right: 20px;  
+    width: 60px;  
+    height: 60px;  
+    border: none;  
+    border-radius: 50%;   
+    background-image: url('../chatbox/img/teiponBot-icon.png');   
+    background-size: cover;   
+    background-color: #ffffff;   
+    color: #ffffff;   
+    display: flex;  
+    justify-content: center;  
+    align-items: center;  
+    cursor: pointer;  
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.05);  
+    transition: all 0.3s ease;  
+}  
 
-  #open-chatbox:hover {
-    background-color: #13545a; 
-  }
+#open-chatbox:hover {  
+    background-color: #DCD7C9;   
+}  
 
-  #chatbox-section {
-    position: fixed; 
-    top: 29%; 
-    left: 75%; 
-    width: 400px; 
-    height: 600px; 
-    background-color: #ffffff;
-    border: none;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0.3, 0.3);
-    transition: box-shadow 0.2s ease;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
+#chatbox-section {  
+    position: fixed;   
+    bottom: 80px;  
+    right: 30px;  
+    max-width: 350px;  
+    width: 100%; /* Full width on smaller screens */  
+    height: auto; /* Allow chatbox to adjust based on content */  
+    max-height: 90vh; /* Set a maximum height */  
+    background-color: #ffffff;  
+    border: none;  
+    border-radius: 10px;  
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);  
+    transition: box-shadow 0.2s ease;  
+    display: flex;  
+    flex-direction: column;  
+    overflow: hidden;  
+    z-index: 9999; /* Ensure it's on top */  
+}  
 
-  
+/* Responsive Design */  
+@media (max-width: 768px) {  
+    #chatbox-section {  
+        width: 95%; /* Almost full width on mobile devices */  
+        height: 60vh; /* Use viewport height for better fit */  
+        bottom: 40px;   
+        right: 10px;  
+    }  
+}  
+
+@media (max-width: 480px) {  
+    #chatbox-section {  
+        width: 100%;  
+        height: 70vh; /* Ensure enough height for usability */  
+        bottom: 0;  
+        left: 0;  
+        border-radius: 0;  
+    }  
+}

@@ -406,4 +406,3 @@ function displaySuccess(message) {
     timer: 3000, // Auto-hide after 3 seconds
   });
 }
-
