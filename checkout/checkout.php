@@ -73,7 +73,7 @@ while ($item = $result->fetch_assoc()) {
     <div class="container my-5">
         <h1 class="text-center mb-4">Checkout</h1>
 
-        <div class="row">
+        <<div class="row">
             <div class="col-md-8">
                 <div class="card mb-4">
                     <div class="card-header">
@@ -82,7 +82,9 @@ while ($item = $result->fetch_assoc()) {
                     <div class="card-body">
                         <?php if (!empty($cart)): ?>
                             <div class="cart-list">
-                                <?php foreach ($cart as $item): ?>
+                                <?php foreach ($cart as $item):
+                                    $itemTotalPrice = $item['productPrice'] * $item['quantity']; // Calculate total price for each item
+                                ?>
                                     <div class="cart-item d-flex justify-content-between mb-3">
                                         <div class="d-flex">
                                             <img src="../uploads/<?= htmlspecialchars($item['productImage']); ?>" alt="<?= htmlspecialchars($item['productName']); ?>" class="me-3 img-thumbnail product-image">
@@ -93,7 +95,7 @@ while ($item = $result->fetch_assoc()) {
                                                     <?php endif; ?>
                                                     (x<?= $item['quantity']; ?>)
                                                 </h5>
-                                                <small class="price">RM <?= number_format($item['productPrice'], 2); ?></small>
+                                                <small class="price">RM <?= number_format($itemTotalPrice, 2); ?></small> <!-- Show the total price for the item -->
                                             </div>
                                         </div>
                                     </div>
@@ -116,10 +118,14 @@ while ($item = $result->fetch_assoc()) {
                             <p><strong>Total Price: </strong><span class="price">RM <?= number_format($totalPrice, 2); ?></span></p>
 
                             <!-- Hidden fields to send cart details including variantID -->
-                            <?php foreach ($cart as $item): ?>
+                            <?php foreach ($cart as $item):
+                                $itemTotalPrice = $item['productPrice'] * $item['quantity']; // Calculate total price for each item again
+                                $totalPrice += $itemTotalPrice; // Add to the total price
+                            ?>
                                 <input type="hidden" name="cart[<?= $item['cartID']; ?>][productID]" value="<?= $item['productID']; ?>">
                                 <input type="hidden" name="cart[<?= $item['cartID']; ?>][variantID]" value="<?= $item['variantID']; ?>">
                                 <input type="hidden" name="cart[<?= $item['cartID']; ?>][quantity]" value="<?= $item['quantity']; ?>">
+                                <input type="hidden" name="cart[<?= $item['cartID']; ?>][itemTotalPrice]" value="<?= $itemTotalPrice; ?>"> <!-- Store total price for each item -->
                             <?php endforeach; ?>
 
                             <button type="submit" class="btn btn-primary w-100">Complete Purchase</button>
@@ -127,7 +133,8 @@ while ($item = $result->fetch_assoc()) {
                     </div>
                 </div>
             </div>
-        </div>
+    </div>
+
     </div>
 
     <script src="../assets/js/bootstrap.bundle.min.js"></script>
