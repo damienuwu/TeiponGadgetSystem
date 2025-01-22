@@ -16,10 +16,9 @@ function showProductDetails(productID) {
           const variantsHTML = product.variants
             ? product.variants
                 .map((variant) => {
-                  const variantPrice = Number(variant.productPrice) || 0;
                   return `<option value="${variant.variantID}">${
                     variant.variantName
-                  } (+RM ${variantPrice.toFixed(2)})</option>`;
+                  }</option>`;
                 })
                 .join("")
             : "<option disabled>No variants available</option>";
