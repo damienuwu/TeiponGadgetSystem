@@ -37,15 +37,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $city = $_POST['city'];
     $address = $_POST['address'];
 
-    $updateSql = "UPDATE Customer SET customerName = ?, customerEmail = ?, customerPhoneNumber = ?, customerState = ?, customerPostalCode = ?, customerCity = ?, customerAddress = ? WHERE customerID = ?";
-    $updateStmt = $conn->prepare($updateSql);
-    $updateStmt->bind_param("ssssissi", $name, $email, $phone, $state, $postalCode, $city, $address, $customerID);
-
-    if ($updateStmt->execute()) {
-        header("Location: manage_customer.php?success=Customer details updated successfully");
-        exit();
+    $emailCheckSql = "SELECT customerEmail FROM Customer WHERE customerEmail = ? AND customerID != ?";
+    $checkEmailStmt = $conn->prepare($emailCheckSql);
+    $checkEmailStmt->bind_param("si", $email, $customerID);
+    $checkEmailStmt->execute();
+    $emailCheckResult = $checkEmailStmt->get_result();
+    if ($emailCheckResult->num_rows > 0) {
+        // Email is already in use by another customer
+        $error = "The email address is already registered.";
     } else {
-        $error = "Error updating customer: " . $updateStmt->error;
+        $updateSql = "UPDATE Customer 
+                      SET customerName = ?, customerEmail = ?, customerPhoneNumber = ?, 
+                          customerState = ?, customerPostalCode = ?, customerCity = ?, 
+                          customerAddress = ?
+                          WHERE customerID = ?";
+        $updateStmt = $conn->prepare($updateSql);
+        $updateStmt->bind_param("ssssissi", $name, $email, $phone, $state, $postalCode, $city, $address, $customerID);
+
+        if ($updateStmt->execute()) {
+            header("Location: manage_customer.php?success=Customer details updated successfully");
+            exit();
+        } else {
+            $error = "Error updating customer: " . $updateStmt->error;
+        }
     }
 }
 ?>
@@ -84,7 +98,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 </div>
                 <div class="mb-3">
                     <label for="phoneNumber" class="form-label">Phone Number</label>
-                    <input type="text" class="form-control" id="phoneNumber" name="phoneNumber" placeholder="Phone" value="<?php echo htmlspecialchars(substr($customer['customerPhoneNumber'], 0)); ?>" required oninput="validatePhoneNumber(event)">
+                    <input type="text" class="form-control" id="phoneNumber" name="phoneNumber" placeholder="Phone" value="<?php echo htmlspecialchars(substr($customer['customerPhoneNumber'], offset: 0)); ?>" required oninput="validatePhoneNumber(event)">
+                    <div class="error-message" id="phoneNumberError"></div>
                 </div>
                 <div class="mb-3">
                     <label for="address" class="form-label">Address</label>
@@ -120,18 +135,49 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             const input = event.target;
             const prefix = "+60";
             let phoneNumber = input.value;
+            const phoneNumberError = document.getElementById('phoneNumberError');
+            const cursorPosition = input.selectionStart;
+            const numberPart = phoneNumber.substring(3);
+
+            phoneNumber = phoneNumber.replace(/[^\d+]/g, '');
 
             // Ensure the phone number starts with the prefix
             if (!phoneNumber.startsWith(prefix)) {
-                phoneNumber = prefix + phoneNumber.substring(3);  // Keep prefix non-editable
+                phoneNumber = prefix + phoneNumber.replace(/^\+*\d*/, '');
+            }
+
+            if (numberPart.length > 10) {
+                phoneNumber = prefix + numberPart.substring(0, 10);
             }
 
             // Set the value so the user can only edit the number after the prefix
             input.value = phoneNumber;
 
-            // Limit the phone number length (10 digits total, including +60)
-            if (input.value.length > 12) {
-                input.value = input.value.substring(0, 12);
+            // Restore cursor position after prefix if user wasn't editing prefix
+            if (cursorPosition > 3) {
+                input.setSelectionRange(cursorPosition, cursorPosition);
+            } else {
+                // If user was trying to edit prefix, move cursor after prefix
+                input.setSelectionRange(3, 3);
+            }
+
+            // Validate number length and show appropriate message
+            if (numberPart.length === 0) {
+                phoneNumberError.textContent = "Please enter a phone number";
+                phoneNumberError.style.color = "red";
+                input.classList.add('is-invalid');
+            } else if (numberPart.length < 9) {
+                phoneNumberError.textContent = "Phone number must be at least 9 digits";
+                phoneNumberError.style.color = "red";
+                input.classList.add('is-invalid');
+            } else if (numberPart.length > 10) {
+                phoneNumberError.textContent = "Phone number cannot exceed 10 digits";
+                phoneNumberError.style.color = "red";
+                input.classList.add('is-invalid');
+            } else {
+                phoneNumberError.textContent = "Valid phone number";
+                phoneNumberError.style.color = "green";
+                input.classList.remove('is-invalid');
             }
         }
     </script>
@@ -188,6 +234,54 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 // Send the email to the server for validation
                 xhr.send("email=" + encodeURIComponent(emailInput));
             }
+        });
+    </script>
+    <script>
+        // Form validation function
+        function validateForm(event) {
+            let isValid = true;
+
+            // Email validation
+            const email = document.getElementById('email');
+            const emailError = document.getElementById('emailError');
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if (!emailRegex.test(email.value)) {
+                emailError.textContent = "Please enter a valid email address.";
+                emailError.style.color = "red";
+                email.classList.add('is-invalid');
+                isValid = false;
+            }
+
+            // Phone number validation
+            const phoneNumber = document.getElementById('phoneNumber');
+            const phoneNumberError = document.getElementById('phoneNumberError');
+            const numberPart = phoneNumber.value.substring(3); // Remove +60 prefix
+
+            if (numberPart.length < 9 || numberPart.length > 10) {
+                phoneNumberError.textContent = numberPart.length < 9
+                    ? "Phone number must be at least 9 digits"
+                    : "Phone number cannot exceed 10 digits";
+                phoneNumberError.style.color = "red";
+                phoneNumber.classList.add('is-invalid');
+                isValid = false;
+            }
+
+            // Prevent form submission if validation fails
+            if (!isValid) {
+                event.preventDefault();
+            }
+
+            return isValid;
+        }
+
+        // Add event listeners
+        document.addEventListener('DOMContentLoaded', function () {
+            const phoneInput = document.getElementById('phoneNumber');
+            const form = document.querySelector('form');
+
+            phoneInput.addEventListener('input', validatePhoneNumber);
+            form.addEventListener('submit', validateForm);
         });
     </script>
 </body>

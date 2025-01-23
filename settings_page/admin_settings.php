@@ -33,24 +33,53 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $newUsername = $_POST['username'];
     $newPassword = !empty($_POST['password']) ? password_hash($_POST['password'], PASSWORD_DEFAULT) : null;
 
-    // Update admin details in the database
-    if ($newPassword) {
-        $updateSql = "UPDATE Staff SET staffName = ?, staffEmail = ?, staffUsername = ?, staffPassword = ? WHERE adminID = ?";
-        $updateStmt = $conn->prepare($updateSql);
-        $updateStmt->bind_param("ssssi", $newName, $newEmail, $newUsername, $newPassword, $adminID);
-    } else {
-        $updateSql = "UPDATE Staff SET staffName = ?, staffEmail = ?, staffUsername = ? WHERE adminID = ?";
-        $updateStmt = $conn->prepare($updateSql);
-        $updateStmt->bind_param("sssi", $newName, $newEmail, $newUsername, $adminID);
+    $error = "";
+
+    // Email check
+    $emailCheckSql = "SELECT staffEmail FROM Staff WHERE staffEmail = ? AND staffEmail != ?";
+    $emailCheckStmt = $conn->prepare($emailCheckSql);
+    $emailCheckStmt->bind_param("ss", $newEmail, $admin['staffEmail']);
+    $emailCheckStmt->execute();
+    $emailCheckResult = $emailCheckStmt->get_result();
+
+    if ($emailCheckResult->num_rows > 0) {
+        $error = "The email address is already registered.";
+        header("Location: admin_settings.php?error=" . urlencode($error));
+        exit();
     }
 
+    // Username check
+    $usernameCheckSql = "SELECT staffUsername FROM Staff WHERE staffUsername = ? AND staffUsername != ?";
+    $usernameCheckStmt = $conn->prepare($usernameCheckSql);
+    $usernameCheckStmt->bind_param("ss", $newUsername, $admin['staffUsername']);
+    $usernameCheckStmt->execute();
+    $usernameCheckResult = $usernameCheckStmt->get_result();
 
-    if ($updateStmt->execute()) {
-        $_SESSION['staffName'] = $newName; // Update session with the new admin name
-        header("Location: admin_settings.php?success=Details updated successfully");
+    if ($usernameCheckResult->num_rows > 0) {
+        $error = "The username is already in use.";
+        header("Location: admin_settings.php?error=" . urlencode($error));
         exit();
-    } else {
-        $error = "Error updating details: " . $updateStmt->error;
+    }
+    // Update admin details in the database
+    if (!$error) {
+        if ($newPassword) {
+            $updateSql = "UPDATE Staff SET staffName = ?, staffEmail = ?, staffUsername = ?, staffPassword = ? WHERE adminID = ?";
+            $updateStmt = $conn->prepare($updateSql);
+            $updateStmt->bind_param("ssssi", $newName, $newEmail, $newUsername, $newPassword, $adminID);
+        } else {
+            $updateSql = "UPDATE Staff SET staffName = ?, staffEmail = ?, staffUsername = ? WHERE adminID = ?";
+            $updateStmt = $conn->prepare($updateSql);
+            $updateStmt->bind_param("sssi", $newName, $newEmail, $newUsername, $adminID);
+        }
+
+
+        if ($updateStmt->execute()) {
+            $_SESSION['staffName'] = $newName; // Update session with the new admin name
+            header("Location: admin_settings.php?success=Details updated successfully");
+            exit();
+        } else {
+            $error = "Error updating details: " . $updateStmt->error;
+        }
     }
 }
 ?>
@@ -75,11 +104,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <h1 class="mb-4">Admin Settings</h1>
 
             <!-- Success and Error Messages -->
-            <?php if (isset($_GET['success'])): ?>
-                <div class="alert alert-success"><?php echo htmlspecialchars($_GET['success']); ?></div>
-            <?php elseif (isset($error)): ?>
-                <div class="alert alert-danger"><?php echo htmlspecialchars($error); ?></div>
-            <?php endif; ?>
+            <?php if (isset($_GET['success'])) {
+                echo '<div class="alert alert-success">' . htmlspecialchars($_GET['success']) . '</div>';
+            } elseif (isset($_GET['error'])) {
+                echo '<div class="alert alert-danger">' . htmlspecialchars($_GET['error']) . '</div>';
+            }
+            ?>
 
             <!-- Admin Edit Form -->
             <form action="" method="POST">
