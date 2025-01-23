@@ -222,7 +222,7 @@ $result = $conn->query($sql);
   </div>
 
   <footer class="bg-light text-center py-4">
-    <p class="mb-0">© Teipon Gadget. All Rights Reserved.</p>
+    <p class="mb-0">© Teipon Gadget 2025. All Rights Reserved.</p>
   </footer>
 
   <script src="assets/js/bootstrap.bundle.min.js"></script>

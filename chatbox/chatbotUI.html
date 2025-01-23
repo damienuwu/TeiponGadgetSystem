@@ -42,7 +42,7 @@
                     const messages = document.getElementById('messages');
                     messages.innerHTML += `
                         <div class="message bot">
-                            <div class="message-content"><strong>Kojek:</strong> ${data.reply}</div>
+                            <div class="message-content"> ${data.reply}</div>
                         </div>
                     `;
                     messages.scrollTop = messages.scrollHeight;
@@ -51,7 +51,7 @@
                     const messages = document.getElementById('messages');
                     messages.innerHTML += `
                         <div class="message bot">
-                            <div class="message-content"><strong>Kojek:</strong> Sorry, there was an error initializing the chat.</div>
+                            <div class="message-content"> Sorry, there was an error initializing the chat.</div>
                         </div>
                     `;
                 });
@@ -91,7 +91,7 @@
                     .then(data => {
                         messages.innerHTML += `
                             <div class="message bot">
-                                <div class="message-content"><strong>Kojek:</strong> ${data.reply}</div>
+                                <div class="message-content"> ${data.reply}</div>
                             </div>
                         `;
                         messages.scrollTop = messages.scrollHeight;
@@ -99,7 +99,7 @@
                     .catch(() => {
                         messages.innerHTML += `
                             <div class="message bot">
-                                <div class="message-content"><strong>Kojek:</strong> Sorry, there was an error processing your message.</div>
+                                <div class="message-content"> Sorry, there was an error processing your message.</div>
                             </div>
                         `;
                     });

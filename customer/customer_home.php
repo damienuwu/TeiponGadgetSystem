@@ -47,6 +47,7 @@ $result = $stmt->get_result();
     <link href="../assets/css/bootstrap.min.css" rel="stylesheet">
     <link href="../assets/css/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <link href="customer_home.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="../assets/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
@@ -145,6 +146,7 @@ $result = $stmt->get_result();
                     </h3>
                     <button id="close-btn" onclick="minimizeChat()">×</button>
                 </div>
+                <div id="chat-date" style="text-align: center; padding: 3px; font-size: 8px;"></div>
                 <div id="messages"></div>
                 <div id="input-area">
                     <input type="text" id="userInput" class="form-control" placeholder="Type your message here...">
@@ -157,7 +159,9 @@ $result = $stmt->get_result();
     </section>
     <button id="open-chatbox" onclick="toggleChatbox()"> </button>
     <!-- end of chatbox -->
-
+    <footer class="bg-white text-center py-4">
+        <p class="mb-0">© Teipon Gadget 2025. All Rights Reserved.</p>
+    </footer>
     <script>
         // Filter products using JavaScript
         document.getElementById("filterButton").addEventListener("click", function() {
@@ -195,6 +199,20 @@ $result = $stmt->get_result();
                 item.style.display = ""; // Make sure all products are visible
             });
         });
+
+        function updateDate() {
+            const dateElement = document.getElementById('chat-date');
+            const now = new Date();
+            const options = {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            };
+            dateElement.textContent = now.toLocaleDateString('en-US', options);
+        }
+
+        updateDate();
     </script>
 </body>
 
