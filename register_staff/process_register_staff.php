@@ -1,71 +1,69 @@
 <?php
-session_start(); // Start session to access logged-in admin details
-
+session_start();
 require_once($_SERVER['DOCUMENT_ROOT'] . '/TeiponGadgetSystem/config/db_config.php');
 
-// Ensure the request method is POST
+header('Content-Type: application/json');
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-  // Check if admin is logged in
-  if (!isset($_SESSION['adminID']) && $_POST['role'] === 'admin') {
-    header("Location: ../login/login.php?error=Access denied");
-    exit();
-  }
-
-  $adminID = isset($_SESSION['adminID']) ? $_SESSION['adminID'] : NULL; // Get adminID from session if logged in, else set to null
-
-  // Capture form data
-  $staffName = trim($_POST['staffName']);
-  $staffUsername = trim($_POST['staffUsername']);
-  $staffEmail = trim($_POST['staffEmail']);
-  $staffPassword = $_POST['staffPassword'];
-  $role = $_POST['role']; // Role from form (either 'admin' or 'staff')
+  $staffName = trim($_POST['staffName'] ?? '');
+  $staffUsername = trim($_POST['staffUsername'] ?? '');
+  $staffEmail = trim($_POST['staffEmail'] ?? '');
+  $staffPassword = $_POST['staffPassword'] ?? '';
+  $role = $_POST['role'] ?? '';
 
   // Validate required fields
   if (empty($staffName) || empty($staffUsername) || empty($staffEmail) || empty($staffPassword)) {
-    header("Location: register_staff.php?error=All fields are required");
+    echo json_encode(['success' => false, 'message' => 'All fields are required.']);
     exit();
   }
 
-  // Check if email is valid
+  // Validate email format
   if (!filter_var($staffEmail, FILTER_VALIDATE_EMAIL)) {
-    header("Location: register_staff.php?error=Invalid email address");
+    echo json_encode(['success' => false, 'message' => 'Invalid email address.']);
     exit();
   }
 
   // Check if username or email already exists
-  $checkSql = "SELECT * FROM Staff WHERE staffUsername = ? OR staffEmail = ?";
+  $checkSql = "SELECT staffUsername, staffEmail FROM Staff WHERE staffUsername = ? OR staffEmail = ?";
   $stmt = $conn->prepare($checkSql);
   $stmt->bind_param("ss", $staffUsername, $staffEmail);
   $stmt->execute();
   $result = $stmt->get_result();
 
   if ($result->num_rows > 0) {
-    // Redirect back if username or email already exists
-    header("Location: register_staff.php?error=Staff already exists");
+    $existingStaff = $result->fetch_assoc();
+    if ($existingStaff['staffUsername'] === $staffUsername) {
+      echo json_encode(['success' => false, 'message' => 'Username already exists.']);
+    } elseif ($existingStaff['staffEmail'] === $staffEmail) {
+      echo json_encode(['success' => false, 'message' => 'Email already exists.']);
+    }
     exit();
   }
 
-  // Hash the password for security
+  // Hash the password securely
   $hashedPassword = password_hash($staffPassword, PASSWORD_DEFAULT);
 
-  // Handle adminID for insertion (if role is 'admin', use the adminID; otherwise, NULL)
-  $adminIDToInsert = ($role === 'admin') ? $adminID : NULL;
+  // Determine adminID based on role
+  $adminID = null; // Default to NULL
+  if ($role === 'admin') {
+    $adminID = $_SESSION['adminID'] ?? null; // Use logged-in admin's ID, if available
+    if (!$adminID) {
+      echo json_encode(['success' => false, 'message' => 'Invalid admin session.']);
+      exit();
+    }
+  }
 
-  // Insert the new staff record into the database with the appropriate adminID
+  // Insert into the database
   $sql = "INSERT INTO Staff (staffName, staffUsername, staffEmail, staffPassword, adminID) VALUES (?, ?, ?, ?, ?)";
   $stmt = $conn->prepare($sql);
+  $stmt->bind_param("ssssi", $staffName, $staffUsername, $staffEmail, $hashedPassword, $adminID);
 
-  // Bind parameters and ensure we pass by reference
-  $stmt->bind_param("ssssi", $staffName, $staffUsername, $staffEmail, $hashedPassword, $adminIDToInsert);
   if ($stmt->execute()) {
-    // Redirect to register_staff.php with a success message
-    header("Location: register_staff.php?success=1");
-    exit();
+    echo json_encode(['success' => true, 'message' => 'Staff registered successfully.']);
   } else {
-    // Redirect to register_staff.php with an error message if query fails
-    header("Location: register_staff.php?error=Failed to register staff");
-    exit();
+    echo json_encode(['success' => false, 'message' => 'Failed to register staff.']);
   }
+  exit();
 }
 
 $conn->close();

@@ -18,7 +18,15 @@
       <div class="col-12 col-md-8 col-lg-6">
         <div class="card shadow-sm p-4 mt-4">
           <h2 class="text-center mb-4">Register New Staff</h2>
-
+          <?php if (isset($_GET['error'])): ?>
+            <div class="alert alert-danger text-center">
+              <?= htmlspecialchars($_GET['error']); ?>
+            </div>
+          <?php elseif (isset($_GET['success'])): ?>
+            <div class="alert alert-success text-center">
+              <?= htmlspecialchars($_GET['success']); ?>
+            </div>
+          <?php endif; ?>
           <!-- Registration Form -->
           <form id="registerForm" action="process_register_staff.php" method="POST" onsubmit="return validateForm(event);">
 
@@ -74,12 +82,15 @@
 
   <script src="../assets/js/bootstrap.bundle.min.js"></script>
   <script>
-    function validateForm(event) {
+    async function validateForm(event) {
+      event.preventDefault(); // Prevent default form submission
+
       const staffName = document.getElementById('staffName').value.trim();
       const staffUsername = document.getElementById('staffUsername').value.trim();
       const staffEmail = document.getElementById('staffEmail').value.trim();
       const staffPassword = document.getElementById('staffPassword').value.trim();
       const confirmPassword = document.getElementById('confirm_password').value.trim();
+      const role = document.querySelector('input[name="role"]:checked').value;
 
       // Validation
       if (!staffName) {
@@ -88,7 +99,6 @@
           title: 'Validation Error',
           text: 'Staff name is required.',
         });
-        event.preventDefault(); // Prevent form submission
         return false;
       }
 
@@ -98,7 +108,6 @@
           title: 'Validation Error',
           text: 'Staff username is required.',
         });
-        event.preventDefault(); // Prevent form submission
         return false;
       }
 
@@ -108,7 +117,6 @@
           title: 'Validation Error',
           text: 'Staff email is required.',
         });
-        event.preventDefault(); // Prevent form submission
         return false;
       }
 
@@ -118,7 +126,6 @@
           title: 'Validation Error',
           text: 'Staff password is required.',
         });
-        event.preventDefault(); // Prevent form submission
         return false;
       }
 
@@ -128,26 +135,55 @@
           title: 'Validation Error',
           text: 'Passwords do not match.',
         });
-        event.preventDefault(); // Prevent form submission
         return false;
       }
 
-      // If everything is valid, show a success message
-      Swal.fire({
-        icon: 'success',
-        title: 'Form Validated',
-        text: 'Staff registration is successful!',
-      }).then(() => {
-        // Submit the form after success message
-        document.getElementById('registerForm').submit();
-      });
+      // Send data to the server using AJAX
+      try {
+        const response = await fetch('process_register_staff.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            staffName,
+            staffUsername,
+            staffEmail,
+            staffPassword,
+            role,
+          }),
+        });
 
-      return false; // Prevent form submission to allow SweetAlert to handle it
+        const data = await response.json();
+
+        if (data.success) {
+          // Show success message
+          Swal.fire({
+            icon: 'success',
+            title: 'Success',
+            text: data.message,
+          }).then(() => {
+            // Optionally, reset the form or redirect
+            document.getElementById('registerForm').reset();
+          });
+        } else {
+          // Show error message
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: data.message,
+          });
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Server Error',
+          text: 'An error occurred. Please try again later.',
+        });
+      }
     }
   </script>
-
-
-
 </body>
 
 </html>
