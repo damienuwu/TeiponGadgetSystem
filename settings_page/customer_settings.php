@@ -181,6 +181,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                     value="<?php echo htmlspecialchars(substr($customer['customerPhoneNumber'], 0)); ?>"
                                     required oninput="validatePhoneNumber(event)">
                                 <label for="phoneNumber">Phone Number</label>
+                                <div id="phoneNumberError" class="invalid-feedback"></div>
                             </div>
                         </div>
                         <!-- Address Section -->
@@ -400,18 +401,34 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             const input = event.target;
             const prefix = "+60";
             let phoneNumber = input.value;
+            const phoneNumberError = document.getElementById('phoneNumberError');
+
+            // Remove any non-digit characters except the + sign
+            phoneNumber = phoneNumber.replace(/[^\d+]/g, '');
 
             // Ensure the phone number starts with the prefix
             if (!phoneNumber.startsWith(prefix)) {
-                phoneNumber = prefix + phoneNumber.substring(3);  // Keep prefix non-editable
+                phoneNumber = prefix;
+            }
+
+            // Get the actual number part (after +60)
+            const numberPart = phoneNumber.substring(3);
+
+            // Limit the number part to 9-10 digits
+            if (numberPart.length > 10) {
+                phoneNumber = prefix + numberPart.substring(0, 10);
             }
 
             // Set the value so the user can only edit the number after the prefix
             input.value = phoneNumber;
 
-            // Limit the phone number length (10 digits total, including +60)
-            if (input.value.length > 12) {
-                input.value = input.value.substring(0, 12);
+            // Validate the number part length
+            if (numberPart.length > 0 && (numberPart.length < 9 || numberPart.length > 10)) {
+                phoneNumberError.textContent = "Phone number must be 9 or 10 digits";
+                input.classList.add('is-invalid');
+            } else {
+                phoneNumberError.textContent = "";
+                input.classList.remove('is-invalid');
             }
         }
     </script>
@@ -420,7 +437,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             const emailInput = this.value.trim();
             const errorDiv = document.getElementById('emailError');
             const emailField = document.getElementById('email');
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;  // Basic email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Basic email format
 
             // Clear previous error message if input is empty
             if (emailInput.length === 0) {
@@ -433,18 +450,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 errorDiv.style.color = "red";
                 emailField.classList.add('is-invalid');
             }
-            // If the email format is valid, proceed to check if it's already taken
+            // If the email format is valid, check if it's already taken
             else {
                 const xhr = new XMLHttpRequest();
-                xhr.open("POST", "../register/check_register.php", true);  // Reusing check_register.php
+                xhr.open("POST", "../register/check_register.php", true); // Adjust path if necessary
                 xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 
                 xhr.onreadystatechange = function () {
                     if (xhr.readyState === 4 && xhr.status === 200) {
                         const response = xhr.responseText.trim();
-                        console.log("Server response:", response);  // Add this line for debugging
+                        console.log("Server response:", response); // Debugging
 
-                        // Handle server response: 'taken' or 'available'
+                        // Handle server responses
                         if (response === "taken") {
                             errorDiv.textContent = "Email is already registered.";
                             errorDiv.style.color = "red";
@@ -453,18 +470,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             errorDiv.textContent = "Email is available.";
                             errorDiv.style.color = "green";
                             emailField.classList.remove('is-invalid');
-                        } else if (response === "invalid_email") {
-                            errorDiv.textContent = "Please enter a valid email address.";
-                            errorDiv.style.color = "red";
-                            emailField.classList.add('is-invalid');
                         } else {
-                            errorDiv.textContent = "An error occurred. Please try again later.";
+                            errorDiv.textContent = "An error occurred. Please try again.";
                             errorDiv.style.color = "red";
                             emailField.classList.add('is-invalid');
                         }
                     }
                 };
-
 
                 // Send the email to the server for validation
                 xhr.send("email=" + encodeURIComponent(emailInput));
@@ -472,31 +484,45 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         });
     </script>
     <script>
-        // Real-time Username Check
+        // Enhanced real-time Username Check
         document.getElementById('username').addEventListener('input', function () {
             const usernameInput = this.value.trim();
             const errorDiv = document.getElementById('usernameError');
             const usernameField = document.getElementById('username');
+            const currentUsername = '<?php echo htmlspecialchars($customer['customerUsername']); ?>';
+
+            // Clear previous error messages
+            errorDiv.textContent = "";
+            usernameField.classList.remove('is-invalid');
 
             if (usernameInput.length === 0) {
-                errorDiv.textContent = "";
-                usernameField.classList.remove('is-invalid');
+                errorDiv.textContent = "Username is required.";
+                errorDiv.style.color = "red";
+                usernameField.classList.add('is-invalid');
             } else if (usernameInput.length < 4) {
                 errorDiv.textContent = "Username must be at least 4 characters long.";
                 errorDiv.style.color = "red";
                 usernameField.classList.add('is-invalid');
+                return; // Don't check availability if length is invalid
+            } else if (usernameInput === currentUsername) {
+                // If username hasn't changed, no need to show any message
+                errorDiv.textContent = "";
+                usernameField.classList.remove('is-invalid');
             } else {
+                // Check username availability
                 const xhr = new XMLHttpRequest();
-                xhr.open("POST", "../register/check_register.php", true);  // Correct URL
+                xhr.open("POST", "../register/check_register.php", true);
                 xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 
                 xhr.onreadystatechange = function () {
                     if (xhr.readyState === 4 && xhr.status === 200) {
-                        if (xhr.responseText === "taken") {
+                        const response = xhr.responseText.trim();
+
+                        if (response === "taken") {
                             errorDiv.textContent = "Username is already taken.";
                             errorDiv.style.color = "red";
                             usernameField.classList.add('is-invalid');
-                        } else {
+                        } else if (response === "available") {
                             errorDiv.textContent = "Username is available.";
                             errorDiv.style.color = "green";
                             usernameField.classList.remove('is-invalid');
@@ -508,6 +534,61 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
         });
     </script>
+</body>
+<script>
+    // Form validation function
+    function validateForm(event) {
+        let isValid = true;
+
+        // Email validation
+        const email = document.getElementById('email');
+        const emailError = document.getElementById('emailError');
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const phoneNumber = document.getElementById('phoneNumber');
+        const phoneNumberError = document.getElementById('phoneNumberError');
+        const numberPart = phoneNumber.value.substring(3);
+        const username = document.getElementById('username');
+        const usernameError = document.getElementById('usernameError');
+
+        if (!emailRegex.test(email.value)) {
+            emailError.textContent = "Please enter a valid email address.";
+            emailError.style.color = "red";
+            email.classList.add('is-invalid');
+            isValid = false;
+        }
+
+        if (numberPart.length < 9 || numberPart.length > 10) {
+            phoneNumberError.textContent = numberPart.length < 9
+                ? "Phone number must be at least 9 digits"
+                : "Phone number cannot exceed 10 digits";
+            phoneNumberError.style.color = "red";
+            phoneNumber.classList.add('is-invalid');
+            isValid = false;
+        }
+
+        if (username.value.trim().length < 4) {
+            usernameError.textContent = 'Username must be at least 4 characters long.';
+            username.classList.add('is-invalid'); // Add CSS class for invalid input (optional)
+            isValid = false;
+        }
+
+        // Prevent form submission if validation fails
+        if (!isValid) {
+            event.preventDefault();
+        }
+
+        return isValid;
+    }
+
+    // Add event listeners
+    document.addEventListener('DOMContentLoaded', function () {
+        const phoneInput = document.getElementById('phoneNumber');
+        const form = document.querySelector('form');
+
+        phoneInput.addEventListener('input', validatePhoneNumber);
+        form.addEventListener('submit', validateForm);
+    });
+</script>
 </body>
 
 </html>

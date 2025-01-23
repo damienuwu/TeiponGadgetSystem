@@ -278,6 +278,9 @@
       if (!username.value.trim()) {
         document.getElementById('usernameError').textContent = 'Username is required.';
         isValid = false;
+      } else if (username.value.trim().length < 4) {
+        document.getElementById('usernameError').textContent = 'Username must be at least 4 characters long.';
+        isValid = false;
       }
 
       // Password validation
@@ -369,6 +372,7 @@
         errorDiv.textContent = "Username must be at least 4 characters long.";
         errorDiv.style.color = "red";
         usernameField.classList.add('is-invalid');
+        return;
       } else {
         const xhr = new XMLHttpRequest();
         xhr.open("POST", "check_register.php", true);  // Correct URL
