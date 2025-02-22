@@ -1,7 +1,7 @@
 # CSC577 Software Engineering Group Project  
 
 ## Project Overview  
-This repository contains the code and documentation for the CSC577 Software Engineering Group Project.
+This repository contains the code and documentation for the CSC577 Software Engineering Group Project. We also integrated Google Cloud API's AI Chatbox in our project. But it can only be run locally at the moment.
 
 ## Documentation  
 
@@ -10,6 +10,8 @@ For detailed documentation, please visit [Teipon Gadget System Documentation](ht
 ## Technologies Used  
 - PHP
 - Bootstrap
+- Javascript
+- Google Cloud API
 ## Installation  
 To get started with the project, follow these instructions:  
 1. Install XAMPP/Laragon
