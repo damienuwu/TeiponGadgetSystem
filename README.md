@@ -4,8 +4,8 @@
 This repository contains the code and documentation for the CSC577 Software Engineering Group Project.
 
 ## Technologies Used  
--PHP
--Bootstrap
+- PHP
+- Bootstrap
 ## Installation  
 To get started with the project, follow these instructions:  
 1. Install XAMPP/Laragon
